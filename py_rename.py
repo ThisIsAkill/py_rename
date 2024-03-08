@@ -28,6 +28,39 @@ class RenameIt(object):
      * camel_case
      * rename
     """
+    def bulk_rename(self, directory):
+        """Recursively rename files in a directory
+
+        :directory: str, the root directory to start renaming files
+        :return: None
+        """
+        for root, _, files in os.walk(directory):
+            for file_name in files:
+                full_path = os.path.join(root, file_name)
+                self._bulk_rename_single_file(full_path)
+
+    def _bulk_rename_single_file(self, full_path):
+        """Rename a single file in bulk renaming mode
+
+        :full_path: str, the full path of the file to be renamed
+        :return: None
+        """
+        self.full_name = full_path
+        self.fname, self.fext = os.path.splitext(os.path.basename(full_path))
+
+        # Perform the selected renaming operations
+        if args.rename:
+            self.rename(args.rename)
+        if args.prefix:
+            self.prefix_it(args.prefix)
+        if args.postfix:
+            self.postfix_it(args.postfix)
+        if args.lower:
+            self.lower_it()
+        if args.remove_space:
+            self.replace_space()
+        if args.camel_case:
+            self.camel_case()
 
     def __init__(self, filename, dryrun, silent):
         self.full_name = filename
@@ -198,6 +231,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     rename_it = RenameIt(args.filename, args.dryrun, args.silent)
+
+    if os.path.isdir(args.filename):
+        # If the specified path is a directory, perform bulk renaming
+        rename_it.bulk_rename(args.filename)
+    else:
+        # If the specified path is a file, perform single file renaming
+        if args.rename or args.prefix or args.postfix or args.lower or args.remove_space or args.camel_case:
+            rename_it._bulk_rename_single_file(args.filename)
+        else:
+            print("No bulk renaming operations specified.")
 
     if args.rename:
         rename_it.rename(args.rename)
